@@ -1,33 +1,11 @@
 import controller from './controller.js'
+import { verifyToken } from '../../middleware/auth.js'
 
-export const initializeTokenRouter = (fastify) => {
-  fastify
-    .decorate('verifyToken', function (request, reply, done) {
-      try {
-        const token = request.headers.Authorization
-        console.log(token)
-        done()
-      } catch (error) {
-        return reply.status(500).send({ Error: error.message })
-      }
-    })
-    .after(() => {
-      fastify.route({
-        method: 'GET',
-        url: '/token',
-        preHandler: fastify.auth([
-          fastify.verifyToken
-        ]),
-        handler: controller.getRoot
-      })
+export const tokenRouter = (instance, opts, next) => {
+  instance.addHook('preHandler', verifyToken)
+  
+  instance.get('/', controller.getRoot)
+  instance.post('/save', controller.postSave)
 
-      fastify.route({
-        method: 'POST',
-        url: '/token/save',
-        preHandler: fastify.auth([
-          fastify.verifyToken
-        ]),
-        handler: controller.postSave
-      })
-    })
+  next()
 }
